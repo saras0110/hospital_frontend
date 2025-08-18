@@ -38,8 +38,8 @@
   function renderLanding(){
     document.getElementById('app').innerHTML = `
       <div class="card p-4 text-center">
-        <h1 class="mb-3">Hospital Management System</h1>
-        <p class="small-muted">Demo — frontend on GitHub Pages, backend on Render (in-memory)</p>
+        <h1 class="mb-3">Hospital Administration System</h1>
+        <p class="small-muted"> - by ACS COLLEGE STUDENTS (in-memory)</p>
         <button class="btn btn-primary btn-lg" id="enterBtn">Enter</button>
       </div>
     `;
@@ -426,9 +426,9 @@
         <div class="small-muted">Added: ${tr.created_at}</div>
       </div>`;
     });
-    html += `<button class="btn btn-secondary" id="backBtn">Back</button></div>`;
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
     document.getElementById('app').innerHTML = html;
-    document.getElementById('backBtn').onclick = renderDashboard;
+    document.getElementById('backDash').onclick = renderDashboard;
   }
 
   // ---------- Doctor: Patients & New Patients ----------
@@ -444,9 +444,9 @@
     for(const pe of myPatients){
       html += `<div class="card p-2 mb-2">${pe} <button class="btn btn-sm btn-outline-primary ms-2" onclick='viewPatientDetails("${pe}")'>View</button></div>`;
     }
-    html += `<button class="btn btn-secondary" id="backBtn">Back</button></div>`;
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
     document.getElementById('app').innerHTML = html;
-    document.getElementById('backBtn').onclick = renderDashboard;
+    document.getElementById('backDash').onclick = renderDashboard;
   }
 
   async function viewPatientDetails(patient_email){
@@ -466,10 +466,10 @@
     <div><input id="newMedicines" class="form-control mb-2" placeholder="Medicines and cost"></div>
     <div><input id="newDays" type="number" class="form-control mb-2" placeholder="Days to cure"></div>
     <button class="btn btn-primary" id="sendPresBtn">Send Prescription</button>
-    <button class="btn btn-secondary ms-2" id="backBtn">Back</button>
+    <button class="btn btn-secondary ms-2" id="backDash">Back</button>
     </div>`;
     document.getElementById('app').innerHTML = html;
-    document.getElementById('backBtn').onclick = renderDoctorPatients;
+    document.getElementById('backDash').onclick = renderDoctorPatients;
     document.getElementById('sendPresBtn').onclick = async ()=>{
       const prescription = document.getElementById('newPrescription').value;
       const medicines = document.getElementById('newMedicines').value || '0';
@@ -515,9 +515,9 @@
         </div>
       </div>`;
     });
-    html += `<button class="btn btn-secondary" id="backBtn">Back</button></div>`;
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
     document.getElementById('app').innerHTML = html;
-    document.getElementById('backBtn').onclick = renderDashboard;
+    document.getElementById('backDash').onclick = renderDashboard;
   }
 
   async function approveAppt(idx){
@@ -554,9 +554,9 @@
         <div class="small-muted">Created: ${m.created_at}</div>
       </div>`;
     });
-    html += `<button class="btn btn-secondary" id="backBtn">Back</button></div>`;
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
     document.getElementById('app').innerHTML = html;
-    document.getElementById('backBtn').onclick = renderDashboard;
+    document.getElementById('backDash').onclick = renderDashboard;
   }
 
   // ---------- Appointments for doctor (list) ----------
@@ -577,9 +577,9 @@
         </div>
       </div>`;
     });
-    html += `<button class="btn btn-secondary" id="backBtn">Back</button></div>`;
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
     document.getElementById('app').innerHTML = html;
-    document.getElementById('backBtn').onclick = renderDashboard;
+    document.getElementById('backDash').onclick = renderDashboard;
   }
 
   // ---------- Staff: Manage appointments ----------
@@ -601,9 +601,9 @@
         </div>
       </div>`;
     });
-    html += `<button class="btn btn-secondary" id="backBtn">Back</button></div>`;
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
     document.getElementById('app').innerHTML = html;
-    document.getElementById('backBtn').onclick = renderDashboard;
+    document.getElementById('backDash').onclick = renderDashboard;
   }
 
   async function toggleNotify(idx){
@@ -636,9 +636,9 @@
         <div class="small-muted">${p.address || ''}</div>
       </div>`;
     });
-    html += `<button class="btn btn-secondary" id="backBtn">Back</button></div>`;
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
     document.getElementById('app').innerHTML = html;
-    document.getElementById('backBtn').onclick = renderDashboard;
+    document.getElementById('backDash').onclick = renderDashboard;
   }
 
   // ---------- Billing ----------
@@ -660,10 +660,10 @@
         </div>
       </div>`;
     });
-    html += `<button class="btn btn-secondary" id="backBtn">Back</button></div>`;
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
     document.getElementById('app').innerHTML = html;
     document.getElementById('newBillBtn').onclick = renderNewBillForm;
-    document.getElementById('backBtn').onclick = renderDashboard;
+    document.getElementById('backDash').onclick = renderDashboard;
   }
 
   async function renderNewBillForm(){
@@ -674,11 +674,11 @@
       <div><input id="billMedicines" class="form-control mb-2" placeholder="Medicine cost (number)"></div>
       <div class="d-flex gap-2">
         <button class="btn btn-primary" id="createBillBtn">Create Bill</button>
-        <button class="btn btn-secondary" id="backBtn">Back</button>
+        <button class="btn btn-secondary" id="backDash">Back</button>
       </div>
     </div>`;
     document.getElementById('app').innerHTML = html;
-    document.getElementById('backBtn').onclick = renderBilling;
+    document.getElementById('backDash').onclick = renderBilling;
     document.getElementById('createBillBtn').onclick = async ()=>{
       const patient_email = document.getElementById('billPatientEmail').value.trim();
       const doctor_email = document.getElementById('billDoctorEmail').value.trim();
@@ -729,4 +729,5 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
