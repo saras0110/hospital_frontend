@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Management System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    /* Global Background */
+    body {
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      transition: background-image 0.5s ease-in-out;
+    }
+
+    /* Page-specific Backgrounds */
+    body.login-bg { background-image: url('images/login-bg.jpg'); }
+    body.register-bg { background-image: url('images/register-bg.jpg'); }
+    body.patient-bg { background-image: url('images/patient-bg.jpg'); }
+    body.doctor-bg { background-image: url('images/doctor-bg.jpg'); }
+    body.staff-bg { background-image: url('images/staff-bg.jpg'); }
+
+    /* Card container */
+    .card-container {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Card style */
+    .custom-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 100%;
+      max-width: 500px;
+      animation: slideUp 0.8s ease-out;
+    }
+
+    /* Slide Up Animation */
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body class="login-bg">
+
+  <!-- Login Page -->
+  <section id="loginPage" class="card-container">
+    <div class="custom-card">
+      <h2 class="text-center">Login</h2>
+      <form id="loginForm">
+        <div class="mb-3">
+          <label>Email</label>
+          <input type="email" class="form-control" id="loginEmail" required>
+        </div>
+        <div class="mb-3">
+          <label>Password</label>
+          <input type="password" class="form-control" id="loginPassword" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Login</button>
+        <p class="mt-3 text-center">
+          Don’t have an account? <a href="#" id="goRegister">Register</a>
+        </p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Register Page -->
+  <section id="registerPage" class="card-container" style="display:none;">
+    <div class="custom-card">
+      <h2 class="text-center">Register</h2>
+      <form id="registerForm">
+        <div class="mb-3">
+          <label>Name</label>
+          <input type="text" class="form-control" id="regName" required>
+        </div>
+        <div class="mb-3">
+          <label>Email</label>
+          <input type="email" class="form-control" id="regEmail" required>
+        </div>
+        <div class="mb-3">
+          <label>Password</label>
+          <input type="password" class="form-control" id="regPassword" required>
+        </div>
+        <div class="mb-3">
+          <label>Role</label>
+          <select id="regRole" class="form-control" required>
+            <option value="patient">Patient</option>
+            <option value="doctor">Doctor</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-success w-100">Register</button>
+        <p class="mt-3 text-center">
+          Already have an account? <a href="#" id="goLogin">Login</a>
+        </p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Patient Dashboard -->
+  <section id="patientDashboard" class="card-container" style="display:none;">
+    <div class="custom-card">
+      <h2 class="text-center">Patient Dashboard</h2>
+      <p>Welcome, Patient!</p>
+      <button class="btn btn-danger w-100" id="logoutPatient">Logout</button>
+    </div>
+  </section>
+
+  <!-- Doctor Dashboard -->
+  <section id="doctorDashboard" class="card-container" style="display:none;">
+    <div class="custom-card">
+      <h2 class="text-center">Doctor Dashboard</h2>
+      <p>Welcome, Doctor!</p>
+      <button class="btn btn-danger w-100" id="logoutDoctor">Logout</button>
+    </div>
+  </section>
+
+  <!-- Staff Dashboard -->
+  <section id="staffDashboard" class="card-container" style="display:none;">
+    <div class="custom-card">
+      <h2 class="text-center">Staff Dashboard</h2>
+      <p>Welcome, Staff!</p>
+      <button class="btn btn-danger w-100" id="logoutStaff">Logout</button>
+    </div>
+  </section>
+
+  <script>
+    // Page switching function
+    function showPage(pageId, bgClass) {
+      document.querySelectorAll("section").forEach(sec => sec.style.display = "none");
+      document.getElementById(pageId).style.display = "block";
+      document.body.className = bgClass;
+    }
+
+    // Links between login/register
+    document.getElementById("goRegister").addEventListener("click", () => {
+      showPage("registerPage", "register-bg");
+    });
+
+    document.getElementById("goLogin").addEventListener("click", () => {
+      showPage("loginPage", "login-bg");
+    });
+
+    // Demo login handling
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      // Just a demo, normally you'd fetch() backend
+      const email = document.getElementById("loginEmail").value;
+      if (email.includes("doctor")) {
+        showPage("doctorDashboard", "doctor-bg");
+      } else if (email.includes("staff")) {
+        showPage("staffDashboard", "staff-bg");
+      } else {
+        showPage("patientDashboard", "patient-bg");
+      }
+    });
+
+    // Logout buttons
+    document.getElementById("logoutPatient").addEventListener("click", () => showPage("loginPage", "login-bg"));
+    document.getElementById("logoutDoctor").addEventListener("click", () => showPage("loginPage", "login-bg"));
+    document.getElementById("logoutStaff").addEventListener("click", () => showPage("loginPage", "login-bg"));
+  </script>
+</body>
+</html>
