@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hospital Management Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+       /* Global Background */
+    body {
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      transition: background-image 0.5s ease-in-out;
+    }
+
+    /* Page-specific Backgrounds */
+    body.login-bg { background-image: url('images/login-bg.jpg'); }
+    body.register-bg { background-image: url('images/register-bg.jpg'); }
+    body.patient-bg { background-image: url('images/patient-bg.jpg'); }
+    body.doctor-bg { background-image: url('images/doctor-bg.jpg'); }
+    body.staff-bg { background-image: url('images/staff-bg.jpg'); }
+
+    /* Card container */
+    .card-container {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Card style */
+    .custom-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 100%;
+      max-width: 500px;
+      animation: slideUp 0.8s ease-out;
+    }
+
+    /* Slide Up Animation */
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    body { background:#f8f9fa; }
+    .card-photo { width:80px;height:80px;border-radius:8px;object-fit:cover;}
+    .red-notify { border-left:4px solid #dc3545; }
+    .small-muted { font-size:0.85rem;color:#6c757d; }
+    .pointer { cursor:pointer; }
+    .content { max-width:980px;margin:30px auto; }
+  </style>
+</head>
+<body class ="login-bg">
+  <div class="content">
+    <div id="app"></div>
+  </div>
+
+  <script>
+  // ---------- CONFIG ----------
+  const BACKEND_URL = "https://hospital-backend-r1uz.onrender.com";
+  // ----------------------------
+
+  // quick state
+  let state = {
+    currentUser: null,
+    currentRole: null
+  };
+
+  // Utilities
+  function el(html){ const d=document.createElement('div'); d.innerHTML=html; return d.firstElementChild; }
+  function showAlert(msg, type='info'){ alert(msg); } // keep simple
+
+  // Root render
+  function renderLanding(){
+    document.getElementById('app').innerHTML = `
+      <div class="card p-4 text-center">
+        <h1 class="mb-3">Hospital Administration System</h1>
+        <p class="small-muted"> - by ACS COLLEGE STUDENTS (in-memory)</p>
+        <button class="btn btn-primary btn-lg" id="enterBtn">Enter</button>
+      </div>
+    `;
+    document.getElementById('enterBtn').onclick = () => renderLogin();
+  }
+  // Page switching function
+  function showPage(pageId, bgClass) {
+    document.querySelectorAll("section").forEach(sec => sec.style.display = "none");
+    document.getElementById(pageId).style.display = "block";
+    document.body.className = bgClass;
+  }   
+
+  // LOGIN & REGISTER
+  function renderLogin(){
+    document.getElementById('app').innerHTML = `
+    <section id="loginPage" class="card-container">
+      <div class="card p-4">
+        <h3>Login</h3>
+        <div class="mb-2">
+          <label class="form-label">Role</label>
+          <select id="roleSelect" class="form-select">
+            <option value="patient">Patient</option>
+            <option value="doctor">Doctor</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+        <div class="mb-2"><input id="loginEmail" class="form-control" placeholder="Email"></div>
+        <div class="mb-2"><input id="loginPass" type="password" class="form-control" placeholder="Password"></div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-success" id="loginBtn">Login</button>
+          <button class="btn btn-secondary" id="backBtn">Back</button>
+        </div>
+        <hr>
+        <p>New user? <a href="#" id="toRegister">Register here</a></p>
+      </div>
+    `;
+    document.getElementById('loginBtn').onclick = loginAction;
+    document.getElementById('backBtn').onclick = renderLanding;
+    document.getElementById('toRegister').onclick = (e)=>{ e.preventDefault(); renderRegister(); };
+  }
+
+  function renderRegister(){
+    document.getElementById('app').innerHTML = `
+     <section id="registerPage" class="card-container" style="display:none;">
+      <div class="card p-4">
+        <h3>Register</h3>
+        <div class="mb-2">
+          <label class="form-label">Role</label>
+          <select id="regRole" class="form-select">
+            <option value="patient">Patient</option>
+            <option value="doctor">Doctor</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+        <div class="mb-2"><input id="regName" class="form-control" placeholder="Name"></div>
+        <div class="mb-2"><input id="regEmail" class="form-control" placeholder="Email"></div>
+        <div class="mb-2"><input id="regPass" type="password" class="form-control" placeholder="Password"></div>
+
+        <!-- patient fields -->
+        <section id="patientDashboard" class="card-container" style="display:none;">
+          <div id="patientFields" class="mb-2 d-none">
+            <input id="patAddress" class="form-control mb-2" placeholder="Address">
+            <label class="form-label">Upload Photo</label>
+            <input id="patPhoto" type="file" class="form-control mb-2">
+          </div>
+
+        <!-- doctor fields -->
+        <section id="doctorDashboard" class="card-container" style="display:none;">
+          <div id="doctorFields" class="mb-2 d-none">
+            <input id="docSpec" class="form-control mb-2" placeholder="Specialization (e.g., Homeopathy)">
+            <input id="docQual" class="form-control mb-2" placeholder="Qualification">
+            <input id="docDoj" type="date" class="form-control mb-2">
+            <label class="form-label">Upload Photo</label>
+            <input id="docPhoto" type="file" class="form-control mb-2">
+          </div>
+
+        <!-- staff fields -->
+        <section id="staffDashboard" class="card-container" style="display:none;">
+          <div id="staffFields" class="mb-2 d-none">
+            <input id="staffQual" class="form-control mb-2" placeholder="Qualification">
+            <input id="staffDoj" type="date" class="form-control mb-2">
+            <label class="form-label">Upload Photo</label>
+            <input id="staffPhoto" type="file" class="form-control mb-2">
+          </div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary" id="regBtn">Register</button>
+          <button class="btn btn-secondary" id="regBack">Back</button>
+        </div>
+      </div>
+    `;
+
+    const roleEl = document.getElementById('regRole');
+    const patientFields = document.getElementById('patientFields');
+    const doctorFields = document.getElementById('doctorFields');
+    const staffFields = document.getElementById('staffFields');
+
+    function toggleFields(){
+      const role = roleEl.value;
+      patientFields.classList.toggle('d-none', role !== 'patient');
+      doctorFields.classList.toggle('d-none', role !== 'doctor');
+      staffFields.classList.toggle('d-none', role !== 'staff');
+    }
+    roleEl.onchange = toggleFields;
+    toggleFields();
+    document.getElementById('regBtn').onclick = registerAction;
+    document.getElementById('regBack').onclick = renderLogin;
+  }
+
+  // ------------ Backend actions ------------
+
+  async function registerAction(){
+    const role = document.getElementById('regRole').value;
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPass').value;
+
+    if(!name || !email || !password){ showAlert("Please fill required fields"); return; }
+
+    const payload = { role, name, email, password };
+
+    // role-specific
+    if(role === 'patient'){
+      payload.address = document.getElementById('patAddress').value || '';
+      const file = document.getElementById('patPhoto').files[0];
+      if(file) payload.photo = await fileToBase64(file);
+    } else if(role === 'doctor'){
+      payload.specialization = document.getElementById('docSpec').value || '';
+      payload.qualification = document.getElementById('docQual').value || '';
+      payload.doj = document.getElementById('docDoj').value || '';
+      const file = document.getElementById('docPhoto').files[0];
+      if(file) payload.photo = await fileToBase64(file);
+    } else if(role === 'staff'){
+      payload.qualification = document.getElementById('staffQual').value || '';
+      payload.doj = document.getElementById('staffDoj').value || '';
+      const file = document.getElementById('staffPhoto').files[0];
+      if(file) payload.photo = await fileToBase64(file);
+    }
+
+    const res = await fetch(`${BACKEND_URL}/register`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(res.status >= 400){ showAlert(data.error || "Register failed"); return; }
+    showAlert("Registered successfully");
+    renderLogin();
+  }
+
+  async function loginAction(){
+    const role = document.getElementById('roleSelect').value;
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPass').value;
+    if(!email || !password){ showAlert("fill credentials"); return; }
+
+    const res = await fetch(`${BACKEND_URL}/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({role, email, password})
+    });
+    const data = await res.json();
+    if(res.status >= 400){ showAlert(data.error || "Login failed"); return; }
+    state.currentUser = data.user;
+    state.currentRole = role;
+    renderDashboard();
+  }
+
+  async function fileToBase64(file){
+    return new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=> resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ------------- DASHBOARDS ---------------
+
+  // Common header part
+  function headerHTML(){
+    const name = state.currentUser ? state.currentUser.name : '';
+    return `
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <button class="btn btn-link" id="homeBtn">Home</button>
+          <button class="btn btn-link" id="backBtn">Back</button>
+        </div>
+        <div>
+          <span class="me-3">Logged in as <strong>${name}</strong> (${state.currentRole})</span>
+          <button class="btn btn-danger btn-sm" id="logoutBtn">Logout</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDashboard(){
+    if(!state.currentUser) return renderLogin();
+    let html = `<div class="card p-4">` + headerHTML();
+    if(state.currentRole === 'patient'){
+      html += `
+       <section id="patientDashboard" class="card-container" style="display:none;">
+        <h4>Patient Dashboard</h4>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card p-3 mb-3">
+              <h5>Profile</h5>
+              <p><strong>${state.currentUser.name}</strong></p>
+              <p class="small-muted">${state.currentUser.email}</p>
+            </div>
+            <div class="card p-3 mb-3">
+              <h5>Treatment</h5>
+              <button class="btn btn-outline-primary mb-2" id="viewTreatBtn">View Treatments</button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3 mb-3">
+              <h5>Doctors</h5>
+              <button class="btn btn-primary" id="viewDocsBtn">View Specializations & Doctors</button>
+            </div>
+            <div class="card p-3">
+              <h5>Appointments</h5>
+              <button class="btn btn-success" id="myApptBtn">My Appointments</button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if(state.currentRole === 'doctor'){
+      html += `
+       <section id="doctorDashboard" class="card-container" style="display:none;">
+        <h4>Doctor Dashboard</h4>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card p-3 mb-3">
+              <h5>My Patients</h5>
+              <button class="btn btn-primary" id="viewMyPatientsBtn">View Patients</button>
+            </div>
+            <div class="card p-3 mb-3">
+              <h5>New Patients (Appointments Pending)</h5>
+              <button class="btn btn-warning" id="viewNewPatientsBtn">New Patients</button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3 mb-3">
+              <h5>Treatment Management</h5>
+              <button class="btn btn-outline-primary" id="manageTreatBtn">Manage Treatments</button>
+            </div>
+            <div class="card p-3">
+              <h5>Appointments</h5>
+              <button class="btn btn-success" id="apptDoctorBtn">View Appointments</button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if(state.currentRole === 'staff'){
+      html += `
+       <section id="staffDashboard" class="card-container" style="display:none;">
+        <h4>Staff Dashboard</h4>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card p-3 mb-3">
+              <h5>Manage Appointments</h5>
+              <button class="btn btn-primary" id="manageApptBtn">Appointments</button>
+            </div>
+            <div class="card p-3 mb-3">
+              <h5>Patient Directory</h5>
+              <button class="btn btn-outline-primary" id="patientListBtn">Patients</button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3 mb-3">
+              <h5>Billing</h5>
+              <button class="btn btn-success" id="billingBtn">Generate/View Bills</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    html += `</div>`;
+    document.getElementById('app').innerHTML = html;
+    // hooks
+    document.getElementById('logoutBtn').onclick = ()=>{ state.currentUser=null; state.currentRole=null; renderLanding(); };
+    document.getElementById('homeBtn').onclick = renderDashboard;
+    document.getElementById('backBtn').onclick = renderLogin;
+
+    // patient hooks
+    if(state.currentRole === 'patient'){
+      document.getElementById('viewDocsBtn').onclick = renderSpecializations;
+      document.getElementById('viewTreatBtn').onclick = renderPatientTreatments;
+      document.getElementById('myApptBtn').onclick = renderMyAppointments;
+    }
+    // doctor hooks
+    if(state.currentRole === 'doctor'){
+      document.getElementById('viewMyPatientsBtn').onclick = renderDoctorPatients;
+      document.getElementById('viewNewPatientsBtn').onclick = renderDoctorNewPatients;
+      document.getElementById('manageTreatBtn').onclick = renderManageTreatments;
+      document.getElementById('apptDoctorBtn').onclick = renderAppointmentsForDoctor;
+    }
+    // staff hooks
+    if(state.currentRole === 'staff'){
+      document.getElementById('manageApptBtn').onclick = renderManageAppointmentsStaff;
+      document.getElementById('patientListBtn').onclick = renderAllPatients;
+      document.getElementById('billingBtn').onclick = renderBilling;
+    }
+  }
+
+  // ---------- Patient: Specializations & Doctors ----------
+  async function renderSpecializations(){
+    // fetch doctors and group by specialization
+    const res = await fetch(`${BACKEND_URL}/doctors`);
+    const docs = await res.json();
+    const groups = {};
+    docs.forEach(d=>{
+      const s = (d.specialization || 'General').trim();
+      groups[s] = groups[s] || [];
+      groups[s].push(d);
+    });
+
+    let html = `<div class="card p-4">${headerHTML()}<h4>Specializations</h4>`;
+    for(const spec in groups){
+      html += `<div class="mb-3"><h5>${spec}</h5><div class="row">`;
+      groups[spec].forEach(d=>{
+        html+=`
+          <div class="col-md-4">
+            <div class="card p-2 mb-2">
+              <div class="d-flex gap-2 align-items-center">
+                <img src="${d.photo || ''}" onerror="this.style.display='none'" class="card-photo me-2"/>
+                <div>
+                  <div><strong>${d.name}</strong></div>
+                  <div class="small-muted">${d.qualification || ''}</div>
+                  <div class="mt-2">
+                    <button class="btn btn-sm btn-primary" onclick='bookForDoctor("${d.name}","${d.email}")'>Book / Message</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      });
+      html += `</div></div>`;
+    }
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('backDash').onclick = renderDashboard;
+  }
+
+  async function bookForDoctor(doctorName, doctorEmail){
+    const patientName = state.currentUser.name;
+    const patientEmail = state.currentUser.email;
+    const date = prompt("Enter date (YYYY-MM-DD):");
+    if(!date) return;
+    const time = prompt("Enter time (e.g., 10:30 AM):");
+    if(!time) return;
+    const payload = { patient_name: patientName, patient_email: patientEmail, doctor_name: doctorName, doctor_email: doctorEmail, date, time };
+    const res = await fetch(`${BACKEND_URL}/appointments`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(res.status>=400) showAlert(data.error || 'Error creating appointment');
+    else showAlert('Appointment requested');
+    renderDashboard();
+  }
+
+  // ---------- Patient: My Appointments ----------
+  async function renderMyAppointments(){
+    const res = await fetch(`${BACKEND_URL}/appointments`);
+    const appts = await res.json();
+    const my = appts.filter(a=>a.patient_email === state.currentUser.email && !a.removed);
+    let html = `<div class="card p-4">${headerHTML()}<h4>My Appointments</h4>`;
+    if(my.length===0) html += `<p>No appointments</p>`;
+    my.forEach((a,idx)=>{
+      const globalIdx = appts.indexOf(a);
+      html += `
+        <div class="card p-3 mb-2 ${a.notified ? 'red-notify':''}">
+          <div><strong>${a.doctor_name}</strong> - ${a.date} at ${a.time}</div>
+          <div class="small-muted">Approved: ${a.approved ? 'Yes' : 'No'}</div>
+          <div class="mt-2">
+            <a class="btn btn-sm btn-outline-secondary" href="${BACKEND_URL}/download_appointment/${globalIdx}" target="_blank">Download Appointment</a>
+          </div>
+        </div>
+      `;
+    });
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('backDash').onclick = renderDashboard;
+  }
+
+  // ---------- Patient: Treatments ----------
+  async function renderPatientTreatments(){
+    const res = await fetch(`${BACKEND_URL}/treatments`);
+    const t = await res.json();
+    const my = t.filter(x => x.patient_email === state.currentUser.email);
+    let html = `<div class="card p-4">${headerHTML()}<h4>My Treatments</h4>`;
+    if(my.length===0) html += `<p>No treatments yet.</p>`;
+    my.forEach(tr=>{
+      html += `<div class="card p-3 mb-2">
+        <div><strong>Doctor:</strong> ${tr.doctor_email}</div>
+        <div><strong>Prescription:</strong> ${tr.prescription}</div>
+        <div><strong>Medicines:</strong> ${tr.medicines}</div>
+        <div><strong>Days to cure:</strong> ${tr.days_to_cure}</div>
+        <div class="small-muted">Added: ${tr.created_at}</div>
+      </div>`;
+    });
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('backDash').onclick = renderDashboard;
+  }
+
+  // ---------- Doctor: Patients & New Patients ----------
+  async function renderDoctorPatients(){
+    // patients where a treatment exists by this doctor OR appointments approved for this doctor
+    const resT = await fetch(`${BACKEND_URL}/treatments`); const t = await resT.json();
+    const resA = await fetch(`${BACKEND_URL}/appointments`); const a = await resA.json();
+    const myPatients = new Set();
+    t.filter(x=>x.doctor_email===state.currentUser.email).forEach(x=>myPatients.add(x.patient_email));
+    a.filter(x=>x.doctor_email===state.currentUser.email && x.approved && !x.removed).forEach(x=>myPatients.add(x.patient_email));
+    let html = `<div class="card p-4">${headerHTML()}<h4>My Patients (${[...myPatients].length})</h4>`;
+    if(myPatients.size===0) html += `<p>No patients yet.</p>`;
+    for(const pe of myPatients){
+      html += `<div class="card p-2 mb-2">${pe} <button class="btn btn-sm btn-outline-primary ms-2" onclick='viewPatientDetails("${pe}")'>View</button></div>`;
+    }
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('backDash').onclick = renderDashboard;
+  }
+
+  async function viewPatientDetails(patient_email){
+    // show messages, treatments, and button to add prescription
+    const resT = await fetch(`${BACKEND_URL}/treatments`); const t = await resT.json();
+    const myTreat = t.filter(x=>x.patient_email===patient_email && x.doctor_email===state.currentUser.email);
+    let html = `<div class="card p-4">${headerHTML()}<h4>Patient: ${patient_email}</h4>`;
+    html += `<h5>Treatments</h5>`;
+    if(myTreat.length===0) html += `<p>No treatments</p>`; else myTreat.forEach(tr=>{
+      html+=`<div class="card p-2 mb-2"><div><strong>Prescription:</strong> ${tr.prescription}</div>
+      <div><strong>Medicines:</strong> ${tr.medicines}</div>
+      <div><strong>Days:</strong> ${tr.days_to_cure}</div></div>`;
+    });
+
+    html += `<h5 class="mt-3">Add Prescription</h5>
+    <div><textarea id="newPrescription" class="form-control mb-2" placeholder="Prescription text"></textarea></div>
+    <div><input id="newMedicines" class="form-control mb-2" placeholder="Medicines and cost"></div>
+    <div><input id="newDays" type="number" class="form-control mb-2" placeholder="Days to cure"></div>
+    <button class="btn btn-primary" id="sendPresBtn">Send Prescription</button>
+    <button class="btn btn-secondary ms-2" id="backDash">Back</button>
+    </div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('backDash').onclick = renderDoctorPatients;
+    document.getElementById('sendPresBtn').onclick = async ()=>{
+      const prescription = document.getElementById('newPrescription').value;
+      const medicines = document.getElementById('newMedicines').value || '0';
+      const days = document.getElementById('newDays').value || 1;
+      const payload = { patient_email, doctor_email: state.currentUser.email, prescription, medicines, days_to_cure: days };
+      const res = await fetch(`${BACKEND_URL}/treatments`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(res.status>=400) showAlert(data.error || 'error'); else {
+        // also generate a bill automatically (demo)
+        const addBill = await fetch(`${BACKEND_URL}/bills`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            patient_name: patient_email,
+            patient_email,
+            doctor_name: state.currentUser.name,
+            doctor_email: state.currentUser.email,
+            fees: 100, medicines: medicines || 0
+          })
+        });
+        showAlert('Prescription sent and bill generated');
+        renderDoctorPatients();
+      }
+    };
+  }
+
+  async function renderDoctorNewPatients(){
+    const res = await fetch(`${BACKEND_URL}/appointments`);
+    const appts = await res.json();
+    const newAppts = appts.filter((a)=>a.doctor_email===state.currentUser.email && !a.approved && !a.removed);
+    let html = `<div class="card p-4">${headerHTML()}<h4>New Appointment Requests</h4>`;
+    if(newAppts.length===0) html += `<p>No new requests</p>`;
+    newAppts.forEach((a, idx)=>{
+      // global idx
+      const globalIdx = appts.indexOf(a);
+      html += `<div class="card p-3 mb-2">
+        <div><strong>${a.patient_name}</strong> (${a.patient_email})</div>
+        <div class="small-muted">${a.date} at ${a.time}</div>
+        <div class="mt-2">
+          <button class="btn btn-success btn-sm" onclick='approveAppt(${globalIdx})'>Approve</button>
+          <button class="btn btn-outline-secondary btn-sm ms-2" onclick='rejectAppt(${globalIdx})'>Reject (remove)</button>
+        </div>
+      </div>`;
+    });
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('backDash').onclick = renderDashboard;
+  }
+
+  async function approveAppt(idx){
+    const res = await fetch(`${BACKEND_URL}/appointments/approve`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({index: idx})
+    });
+    const data = await res.json();
+    if(res.status>=400) showAlert(data.error || 'Error approving');
+    else showAlert('Approved');
+    renderDoctorNewPatients();
+  }
+  async function rejectAppt(idx){
+    const res = await fetch(`${BACKEND_URL}/appointments/remove`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({index: idx})
+    });
+    const data = await res.json();
+    if(res.status>=400) showAlert(data.error || 'Error removing');
+    else showAlert('Removed');
+    renderDoctorNewPatients();
+  }
+
+  // Doctor: Manage treatments (view sent by doctor)
+  async function renderManageTreatments(){
+    const res = await fetch(`${BACKEND_URL}/treatments`);
+    const all = await res.json();
+    const mine = all.filter(t=>t.doctor_email === state.currentUser.email);
+    let html = `<div class="card p-4">${headerHTML()}<h4>Manage Treatments</h4>`;
+    if(mine.length===0) html += `<p>No treatments yet.</p>`;
+    mine.forEach(m=>{
+      html += `<div class="card p-2 mb-2">
+        <div><strong>Patient:</strong> ${m.patient_email}</div>
+        <div><strong>Prescription:</strong> ${m.prescription}</div>
+        <div><strong>Days:</strong> ${m.days_to_cure}</div>
+        <div class="small-muted">Created: ${m.created_at}</div>
+      </div>`;
+    });
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('backDash').onclick = renderDashboard;
+  }
+
+  // ---------- Appointments for doctor (list) ----------
+  async function renderAppointmentsForDoctor(){
+    const res = await fetch(`${BACKEND_URL}/appointments`);
+    const appts = await res.json();
+    const mine = appts.filter(a=>a.doctor_email===state.currentUser.email && !a.removed);
+    let html = `<div class="card p-4">${headerHTML()}<h4>Appointments</h4>`;
+    if(mine.length===0) html += `<p>No appointments</p>`;
+    mine.forEach((a, idx)=>{
+      const globalIdx = appts.indexOf(a);
+      html += `<div class="card p-2 mb-2 ${a.notified ? 'red-notify':''}">
+        <div><strong>${a.patient_name}</strong> (${a.patient_email})</div>
+        <div class="small-muted">${a.date} at ${a.time}</div>
+        <div>Approved: ${a.approved ? 'Yes' : 'No'}</div>
+        <div class="mt-2">
+          <a class="btn btn-sm btn-outline-secondary" href="${BACKEND_URL}/download_appointment/${globalIdx}" target="_blank">Download</a>
+        </div>
+      </div>`;
+    });
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('backDash').onclick = renderDashboard;
+  }
+
+  // ---------- Staff: Manage appointments ----------
+  async function renderManageAppointmentsStaff(){
+    const res = await fetch(`${BACKEND_URL}/appointments`);
+    const appts = await res.json();
+    let html = `<div class="card p-4">${headerHTML()}<h4>All Appointments</h4>`;
+    if(appts.length===0) html += `<p>No appointments.</p>`;
+    appts.forEach((a, idx)=>{
+      if(a.removed) return;
+      html += `<div class="card p-2 mb-2 ${a.notified ? 'red-notify':''}">
+        <div><strong>${a.patient_name}</strong> → ${a.doctor_name}</div>
+        <div class="small-muted">${a.date} ${a.time}</div>
+        <div>Approved: ${a.approved ? 'Yes' : 'No'}</div>
+        <div class="mt-2">
+          <a class="btn btn-sm btn-outline-secondary" href="${BACKEND_URL}/download_appointment/${idx}" target="_blank">Download</a>
+          <button class="btn btn-sm btn-success ms-2" onclick="toggleNotify(${idx})">Mark Done (turn off notify)</button>
+          <button class="btn btn-sm btn-danger ms-2" onclick="staffRemove(${idx})">Remove</button>
+        </div>
+      </div>`;
+    });
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('backDash').onclick = renderDashboard;
+  }
+
+  async function toggleNotify(idx){
+    const res = await fetch(`${BACKEND_URL}/appointments/toggle_notify`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({index: idx})
+    });
+    const data = await res.json();
+    if(res.status>=400) showAlert(data.error||'error'); else showAlert('Notification turned off');
+    renderManageAppointmentsStaff();
+  }
+
+  async function staffRemove(idx){
+    const res = await fetch(`${BACKEND_URL}/appointments/remove`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({index: idx})
+    });
+    const data = await res.json();
+    if(res.status>=400) showAlert(data.error||'error'); else showAlert('Removed');
+    renderManageAppointmentsStaff();
+  }
+
+  // ---------- Staff: Patients list ----------
+  async function renderAllPatients(){
+    const res = await fetch(`${BACKEND_URL}/patients`);
+    const pts = await res.json();
+    let html = `<div class="card p-4">${headerHTML()}<h4>Patients</h4>`;
+    if(pts.length===0) html += `<p>No patients registered.</p>`;
+    pts.forEach(p=>{
+      html += `<div class="card p-2 mb-2">
+        <div><strong>${p.name}</strong> (${p.email})</div>
+        <div class="small-muted">${p.address || ''}</div>
+      </div>`;
+    });
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('backDash').onclick = renderDashboard;
+  }
+
+  // ---------- Billing ----------
+  async function renderBilling(){
+    const res = await fetch(`${BACKEND_URL}/bills`);
+    const all = await res.json();
+    let html = `<div class="card p-4">${headerHTML()}<h4>Bills</h4>
+      <div class="mb-3">
+        <button class="btn btn-primary" id="newBillBtn">Generate Bill</button>
+      </div>`;
+    if(all.length===0) html += `<p>No bills yet.</p>`;
+    all.forEach((b, idx)=>{
+      html += `<div class="card p-2 mb-2">
+        <div><strong>${b.patient_name}</strong> - Total: ${b.total}</div>
+        <div class="small-muted">Created: ${b.created_at}</div>
+        <div class="mt-2">
+          <a class="btn btn-sm btn-outline-secondary" href="${BACKEND_URL}/download_bill/${idx}" target="_blank">Download</a>
+          ${b.paid ? `<span class="badge bg-success ms-2">PAID</span>` : `<button class="btn btn-sm btn-success ms-2" onclick="payBill(${idx})">Pay</button>`}
+        </div>
+      </div>`;
+    });
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('newBillBtn').onclick = renderNewBillForm;
+    document.getElementById('backDash').onclick = renderDashboard;
+  }
+
+  async function renderNewBillForm(){
+    let html = `<div class="card p-4">${headerHTML()}<h4>Generate Bill</h4>
+      <div><input id="billPatientEmail" class="form-control mb-2" placeholder="Patient email"></div>
+      <div><input id="billDoctorEmail" class="form-control mb-2" placeholder="Doctor email"></div>
+      <div><input id="billFees" class="form-control mb-2" placeholder="Doctor fees (number)"></div>
+      <div><input id="billMedicines" class="form-control mb-2" placeholder="Medicine cost (number)"></div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" id="createBillBtn">Create Bill</button>
+        <button class="btn btn-secondary" id="backDash">Back</button>
+      </div>
+    </div>`;
+    document.getElementById('app').innerHTML = html;
+    document.getElementById('backDash').onclick = renderBilling;
+    document.getElementById('createBillBtn').onclick = async ()=>{
+      const patient_email = document.getElementById('billPatientEmail').value.trim();
+      const doctor_email = document.getElementById('billDoctorEmail').value.trim();
+      const fees = parseFloat(document.getElementById('billFees').value||0);
+      const medicines = parseFloat(document.getElementById('billMedicines').value||0);
+      if(!patient_email || !doctor_email){ showAlert('fill fields'); return; }
+      const payload = {
+        patient_name: patient_email, patient_email,
+        doctor_name: state.currentUser ? state.currentUser.name : doctor_email,
+        doctor_email,
+        fees, medicines
+      };
+      const res = await fetch(`${BACKEND_URL}/bills`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(res.status>=400) showAlert(data.error||'error'); else {
+        showAlert('Bill created');
+        renderBilling();
+      }
+    };
+  }
+
+  async function payBill(idx){
+    const res = await fetch(`${BACKEND_URL}/bills/pay`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({index: idx})
+    });
+    const data = await res.json();
+    if(res.status>=400) showAlert(data.error||'error'); else {
+      showAlert('Paid');
+      renderBilling();
+    }
+  }
+    
+
+  // ---------- helpers ----------
+  // Used earlier in doctor view
+  window.bookForDoctor = bookForDoctor;
+  window.approveAppt = approveAppt;
+  window.rejectAppt = rejectAppt;
+  window.toggleNotify = toggleNotify;
+  window.staffRemove = staffRemove;
+  window.viewPatientDetails = viewPatientDetails;
+  window.payBill = payBill;
+
+  // start
+  renderLanding();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
