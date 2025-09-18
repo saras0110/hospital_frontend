@@ -91,7 +91,7 @@
     document.getElementById('enterBtn').onclick = () => renderLogin();
   }
  // Page switching function
- ( function showPage(pageId, bgClass) {
+  function showPage(pageId, bgClass) {
     document.querySelectorAll("section").forEach(sec => sec.style.display = "none");
     document.getElementById(pageId).style.display = "block";
     document.body.className = bgClass;
@@ -144,7 +144,6 @@
         <div class="mb-2"><input id="regPass" type="password" class="form-control" placeholder="Password"></div>
 
         <!-- patient fields -->
-        <section id="patientDashboard" class="card-container" style="display:none;">
           <div id="patientFields" class="mb-2 d-none">
             <input id="patAddress" class="form-control mb-2" placeholder="Address">
             <label class="form-label">Upload Photo</label>
@@ -152,7 +151,6 @@
           </div>
 
         <!-- doctor fields -->
-        <section id="doctorDashboard" class="card-container" style="display:none;">
           <div id="doctorFields" class="mb-2 d-none">
             <input id="docSpec" class="form-control mb-2" placeholder="Specialization (e.g., Homeopathy)">
             <input id="docQual" class="form-control mb-2" placeholder="Qualification">
@@ -162,7 +160,6 @@
           </div>
 
         <!-- staff fields -->
-        <section id="staffDashboard" class="card-container" style="display:none;">
           <div id="staffFields" class="mb-2 d-none">
             <input id="staffQual" class="form-control mb-2" placeholder="Qualification">
             <input id="staffDoj" type="date" class="form-control mb-2">
