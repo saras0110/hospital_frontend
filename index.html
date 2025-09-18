@@ -59,6 +59,35 @@
     .card {
       background-color: rgba(255, 255, 255, 0.9);
     }
+    /* Card container */
+    .card-container {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Card style */
+    .custom-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 100%;
+      max-width: 500px;
+      animation: slideUp 0.8s ease-out;
+    }
+
+    /* Slide Up Animation */
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
   </style>
 </head>
   <body>
@@ -86,9 +115,13 @@
   document.body.className = "landing-bg"; // reset background
   document.getElementById('app').innerHTML = `
     <div class="card p-4 text-center">
+    <div class="card-container">
+    <div class="custom-card">
       <h1 class="mb-3">Hospital Administration System</h1>
       <p class="small-muted"> - by ACS COLLEGE STUDENTS (in-memory)</p>
       <button class="btn btn-primary btn-lg" id="enterBtn">Enter</button>
+    </div>
+    </div>
     </div>
   `;
   document.getElementById('enterBtn').onclick = () => renderLogin();
@@ -98,6 +131,8 @@
   function renderLogin(){
     document.body.className = "login-bg";
     document.getElementById('app').innerHTML = `
+      <div class="card-container">
+      <div class="custom-card">
       <div class="card p-4">
         <h3>Login</h3>
         <div class="mb-2">
@@ -117,6 +152,8 @@
         <hr>
         <p>New user? <a href="#" id="toRegister">Register here</a></p>
       </div>
+      </div>
+      </div>
     `;
     document.getElementById('loginBtn').onclick = loginAction;
     document.getElementById('backBtn').onclick = renderLanding;
@@ -126,6 +163,8 @@
   function renderRegister(){
     document.body.className = "register-bg";
     document.getElementById('app').innerHTML = `
+     <div class="card-container">
+      <div class="custom-card">
       <div class="card p-4">
         <h3>Register</h3>
         <div class="mb-2">
@@ -168,6 +207,8 @@
           <button class="btn btn-primary" id="regBtn">Register</button>
           <button class="btn btn-secondary" id="regBack">Back</button>
         </div>
+      </div>
+      </div>
       </div>
     `;
 
@@ -279,6 +320,8 @@
     if(state.currentRole === 'patient') {
       document.body.className = "patient-bg";
       html += `
+       <div class="card-container">
+       <div class="custom-card">
         <h4>Patient Dashboard</h4>
         <div class="row">
           <div class="col-md-6">
@@ -303,10 +346,14 @@
             </div>
           </div>
         </div>
+        </div>
+        </div>
       `;
     } else if(state.currentRole === 'doctor') {
       document.body.className = "doctor-bg";
       html += `
+       <div class="card-container">
+       <div class="custom-card">
         <h4>Doctor Dashboard</h4>
         <div class="row">
           <div class="col-md-6">
@@ -330,10 +377,14 @@
             </div>
           </div>
         </div>
+        </div>
+        </div>
       `;
     } else if(state.currentRole === 'staff') {
       document.body.className = "staff-bg";
       html += `
+       <div class="card-container">
+       <div class="custom-card">
         <h4>Staff Dashboard</h4>
         <div class="row">
           <div class="col-md-6">
@@ -352,6 +403,8 @@
               <button class="btn btn-success" id="billingBtn">Generate/View Bills</button>
             </div>
           </div>
+        </div>
+        </div>
         </div>
       `;
     }
@@ -400,6 +453,8 @@
       html += `<div class="mb-3"><h5>${spec}</h5><div class="row">`;
       groups[spec].forEach(d=>{
         html+=`
+        <div class="card-container">
+        <div class="custom-card">
           <div class="col-md-4">
             <div class="card p-2 mb-2">
               <div class="d-flex gap-2 align-items-center">
@@ -413,6 +468,8 @@
                 </div>
               </div>
             </div>
+          </div>
+          </div>
           </div>`;
       });
       html += `</div></div>`;
@@ -449,6 +506,8 @@
     my.forEach((a,idx)=>{
       const globalIdx = appts.indexOf(a);
       html += `
+       <div class="card-container">
+       <div class="custom-card">
         <div class="card p-3 mb-2 ${a.notified ? 'red-notify':''}">
           <div><strong>${a.doctor_name}</strong> - ${a.date} at ${a.time}</div>
           <div class="small-muted">Approved: ${a.approved ? 'Yes' : 'No'}</div>
@@ -456,9 +515,11 @@
             <a class="btn btn-sm btn-outline-secondary" href="${BACKEND_URL}/download_appointment/${globalIdx}" target="_blank">Download Appointment</a>
           </div>
         </div>
-      `;
+        `;
     });
-    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>
+    </div>
+    </div>`;
     document.getElementById('app').innerHTML = html;
     document.getElementById('backDash').onclick = renderDashboard;
   }
@@ -471,7 +532,10 @@
     let html = `<div class="card p-4">${headerHTML()}<h4>My Treatments</h4>`;
     if(my.length===0) html += `<p>No treatments yet.</p>`;
     my.forEach(tr=>{
-      html += `<div class="card p-3 mb-2">
+      html += `
+      <div class="card-container">
+      <div class="custom-card">
+      <div class="card p-3 mb-2">
         <div><strong>Doctor:</strong> ${tr.doctor_email}</div>
         <div><strong>Prescription:</strong> ${tr.prescription}</div>
         <div><strong>Medicines:</strong> ${tr.medicines}</div>
@@ -479,7 +543,9 @@
         <div class="small-muted">Added: ${tr.created_at}</div>
       </div>`;
     });
-    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>
+  </div>
+  </div>`;
     document.getElementById('app').innerHTML = html;
     document.getElementById('backDash').onclick = renderDashboard;
   }
@@ -495,9 +561,11 @@
     let html = `<div class="card p-4">${headerHTML()}<h4>My Patients (${[...myPatients].length})</h4>`;
     if(myPatients.size===0) html += `<p>No patients yet.</p>`;
     for(const pe of myPatients){
-      html += `<div class="card p-2 mb-2">${pe} <button class="btn btn-sm btn-outline-primary ms-2" onclick='viewPatientDetails("${pe}")'>View</button></div>`;
+      html += ` <div class="card-container">
+      <div class="custom-card"><div class="card p-2 mb-2">${pe} <button class="btn btn-sm btn-outline-primary ms-2" onclick='viewPatientDetails("${pe}")'>View</button></div> </div></div>`;
     }
-    html += `<button class="btn btn-secondary" id="backDash">Back</button></div>`;
+    html += ` <div class="card-container">
+      <div class="custom-card"><button class="btn btn-secondary" id="backDash">Back</button></div></div></div>`;
     document.getElementById('app').innerHTML = html;
     document.getElementById('backDash').onclick = renderDashboard;
   }
@@ -506,7 +574,9 @@
     // show messages, treatments, and button to add prescription
     const resT = await fetch(`${BACKEND_URL}/treatments`); const t = await resT.json();
     const myTreat = t.filter(x=>x.patient_email===patient_email && x.doctor_email===state.currentUser.email);
-    let html = `<div class="card p-4">${headerHTML()}<h4>Patient: ${patient_email}</h4>`;
+    let html = ` <div class="card-container">
+      <div class="custom-card">
+      <div class="card p-4">${headerHTML()}<h4>Patient: ${patient_email}</h4> `;
     html += `<h5>Treatments</h5>`;
     if(myTreat.length===0) html += `<p>No treatments</p>`; else myTreat.forEach(tr=>{
       html+=`<div class="card p-2 mb-2"><div><strong>Prescription:</strong> ${tr.prescription}</div>
@@ -782,6 +852,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
 
 
